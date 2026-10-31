@@ -1,0 +1,14 @@
+{
+  "senha": "123456",
+  "diaDeNascimento": "26",
+  "mesDeNascimento": "January",
+  "anoDeNascimento": "1994",
+  "primeiroNome": "Test",
+  "sobrenome": "QA",
+  "endereco": "Av Faria Lima, 1485",
+  "pais": "Canada",
+  "estado": "Alberta",
+  "cidade": "Edmonton",
+  "cep": "T5J 2H7",
+  "telefone": "587-555-0199"
+}

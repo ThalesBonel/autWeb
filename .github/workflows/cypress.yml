@@ -1,0 +1,46 @@
+name: Cypress E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cypress-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cypress:
+    name: Cypress E2E tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies and run Cypress
+        uses: cypress-io/github-action@v7
+        with:
+          install-command: npm ci
+          command: npm test
+
+      - name: Upload Mochawesome report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mochawesome-report-${{ github.run_number }}
+          path: cypress/reports/html/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

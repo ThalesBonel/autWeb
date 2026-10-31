@@ -1,0 +1,8 @@
+{
+  "nomeNoCartao": "Thales TEST",
+  "numeroDoCartao": "4111111111111111",
+  "cvc": "311",
+  "mesDeExpiracao": "12",
+  "anoDeExpiracao": "2030",
+  "comentarioDoPedido": "Pedido automatizado do teste de checkout."
+}
