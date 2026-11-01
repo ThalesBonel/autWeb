@@ -1,17 +1,33 @@
 import {
   formularioDeInscricao,
   formularioDeDadosDaConta,
+  paginaDaContaCriada,
   textosDeCadastro,
 } from "./seletores";
 
 export const validarFormularioDeInscricaoVisivel = () => {
-  cy.contains("h2", textosDeCadastro.tituloDoFormularioDeInscricao).should("be.visible");
+  cy.get(formularioDeInscricao.campoNome).should("be.visible");
+  cy.get(formularioDeInscricao.campoEmail).should("be.visible");
+  cy.get(formularioDeInscricao.botaoInscrever).should("be.visible");
+  cy.get(formularioDeInscricao.titulo)
+    .should("have.length", 1)
+    .and("be.visible")
+    .and("have.text", textosDeCadastro.tituloDoFormularioDeInscricao);
 };
 
 export const iniciarCadastro = (nomeDoUsuario, email) => {
-  cy.get(formularioDeInscricao.campoNome).type(nomeDoUsuario);
-  cy.get(formularioDeInscricao.campoEmail).type(email);
-  cy.get(formularioDeInscricao.botaoInscrever).click();
+  cy.get(formularioDeInscricao.campoNome)
+    .should("have.length", 1)
+    .and("be.visible")
+    .type(nomeDoUsuario);
+  cy.get(formularioDeInscricao.campoEmail)
+    .should("have.length", 1)
+    .and("be.visible")
+    .type(email);
+  cy.get(formularioDeInscricao.botaoInscrever)
+    .should("have.length", 1)
+    .and("be.visible")
+    .click();
 };
 
 export const preencherDadosDaConta = (dadosDaConta) => {
@@ -36,16 +52,18 @@ export const preencherDadosDaConta = (dadosDaConta) => {
 };
 
 export const validarContaCriada = () => {
-  cy.get("b").contains(textosDeCadastro.contaCriada).should("be.visible");
+  cy.get(paginaDaContaCriada.titulo)
+    .should("have.length", 1)
+    .and("be.visible")
+    .and("have.text", textosDeCadastro.contaCriada);
 };
 
 export const continuarAposCriarConta = () => {
-  cy.get(formularioDeDadosDaConta.botaoContinuar).click();
+  cy.get(paginaDaContaCriada.botaoContinuar).should("have.length", 1).click();
 };
 
 export const validarEmailJaCadastrado = () => {
-  cy.get(formularioDeInscricao.mensagemDeErro).should(
-    "have.text",
-    textosDeCadastro.emailJaCadastrado
-  );
+  cy.get(formularioDeInscricao.mensagemDeErro)
+    .should("have.length", 1)
+    .and("have.text", textosDeCadastro.emailJaCadastrado);
 };

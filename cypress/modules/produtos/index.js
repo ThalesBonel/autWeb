@@ -7,28 +7,33 @@ import {
 
 export const validarPaginaDeProdutos = () => {
   cy.url().should("include", "/products");
-  cy.contains(paginaDeProdutos.tituloDaPagina, textosDeProdutos.tituloDaLista).should(
-    "be.visible"
-  );
+  cy.get(paginaDeProdutos.tituloDaPagina)
+    .should("have.length", 1)
+    .and("be.visible")
+    .and("have.text", textosDeProdutos.tituloDaLista);
 };
 
 export const buscarProduto = (termo) => {
-  cy.get(paginaDeProdutos.campoDeBusca).type(termo);
-  cy.get(paginaDeProdutos.botaoDeBusca).click();
+  cy.get(paginaDeProdutos.campoDeBusca).should("have.length", 1).clear().type(termo);
+  cy.get(paginaDeProdutos.botaoDeBusca).should("have.length", 1).click();
 };
 
 export const validarPaginaDeBusca = (termo) => {
   cy.url().should("include", `/products?search=${termo}`);
-  cy.contains(paginaDeProdutos.tituloDaPagina, textosDeProdutos.tituloDaBusca).should(
-    "be.visible"
-  );
+  cy.get(paginaDeProdutos.tituloDaPagina)
+    .should("have.length", 1)
+    .and("be.visible")
+    .and("have.text", textosDeProdutos.tituloDaBusca);
 };
 
 export const validarResultadosDaBusca = (termo) => {
   cy.get(paginaDeProdutos.cardDoProduto)
     .should("have.length.at.least", 1)
     .each(($card) => {
-      cy.wrap($card).find(paginaDeProdutos.nomeDoProduto).first().should("be.visible");
+      cy.wrap($card)
+        .find(paginaDeProdutos.blocoDeInformacaoDoProduto)
+        .should("have.length", 1)
+        .and("be.visible");
     });
 
   coletarProdutosDaLista().then((produtos) => {
@@ -43,7 +48,10 @@ export const validarResultadosDaBusca = (termo) => {
 
 export const validarCardsDeProduto = () => {
   cy.get(paginaDeProdutos.cardDoProduto).each(($card) => {
-    cy.wrap($card).find(paginaDeProdutos.nomeDoProduto).first().should("be.visible");
+    cy.wrap($card)
+      .find(paginaDeProdutos.blocoDeInformacaoDoProduto)
+      .should("have.length", 1)
+      .and("be.visible");
   });
 };
 
@@ -64,30 +72,47 @@ export const coletarProdutosDaLista = () => {
   return cy.get(paginaDeProdutos.cardDoProduto).then(($cards) => {
     return $cards.toArray().map((card) => {
       const $card = Cypress.$(card);
+      const $nome = $card.find(paginaDeProdutos.nomeDoProduto);
+      const $preco = $card.find(paginaDeProdutos.precoDoProduto);
+      const $link = $card
+        .parent(paginaDeProdutos.agrupadorDoCard)
+        .find(paginaDeProdutos.linkVerProduto);
+
+      expect($nome.length, "quantidade de nomes no card").to.equal(1);
+      expect($preco.length, "quantidade de preços no card").to.equal(1);
+      expect($link.length, "quantidade de links de detalhe no card").to.equal(1);
+
+      const link = $link.attr("href");
+      const id = link?.match(/^\/product_details\/(\d+)$/)?.[1];
 
       return {
-        id: $card.find("[data-product-id]").first().attr("data-product-id"),
-        nome: $card.find(paginaDeProdutos.nomeDoProduto).first().text().trim(),
-        preco: $card.find(paginaDeProdutos.precoDoProduto).first().text().trim(),
-        link: $card
-          .parent(paginaDeProdutos.agrupadorDoCard)
-          .find(paginaDeProdutos.linkVerProduto)
-          .first()
-          .attr("href"),
+        id,
+        nome: $nome.text().trim(),
+        preco: $preco.text().trim(),
+        link,
       };
     });
   });
 };
 
-export const abrirDetalhesDoPrimeiroProduto = () => {
-  cy.get(paginaDeProdutos.linkVerProduto).first().click();
+export const abrirDetalhesDoProduto = (produto) => {
+  cy.get(paginaDeProdutos.linkVerProduto)
+    .filter(`[href="${produto.link}"]`)
+    .should("have.length", 1)
+    .click();
 };
 
 export const validarDetalhesDoProdutoCerto = (produto) => {
   cy.url().should("eq", `${Cypress.config("baseUrl")}${produto.link}`);
 
-  cy.get(paginaDeDetalhesDoProduto.nome).should("be.visible").and("have.text", produto.nome);
-  cy.get(paginaDeDetalhesDoProduto.preco).should("be.visible").and("have.text", produto.preco);
+  cy.get(paginaDeDetalhesDoProduto.nome)
+    .should("have.length", 1)
+    .and("be.visible")
+    .and("have.text", produto.nome);
+  cy.get(paginaDeDetalhesDoProduto.preco)
+    .should("have.length", 1)
+    .and("be.visible")
+    .and("have.text", produto.preco);
 };
 
 export const validarCamposDoDetalheDoProduto = () => {
@@ -99,9 +124,10 @@ export const validarCamposDoDetalheDoProduto = () => {
     });
 
     camposObrigatoriosDoDetalhe.forEach(({ prefixo, nome }) => {
-      const campo = campos.find(({ texto }) => texto.startsWith(prefixo));
+      const camposCorrespondentes = campos.filter(({ texto }) => texto.startsWith(prefixo));
+      expect(camposCorrespondentes.length, `quantidade do campo "${nome}"`).to.equal(1);
 
-      expect(campo, `campo obrigatório "${nome}" na tela de detalhes`).to.not.be.undefined;
+      const [campo] = camposCorrespondentes;
       expect(campo.visivel, `campo "${nome}" visível`).to.be.true;
       expect(campo.texto, `campo "${nome}"`).to.match(new RegExp(`^${prefixo} \\S`));
     });

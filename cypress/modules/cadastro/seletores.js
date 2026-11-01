@@ -1,7 +1,8 @@
 export const formularioDeInscricao = {
-  campoNome: '[data-qa="signup-name"]',
-  campoEmail: '[data-qa="signup-email"]',
-  botaoInscrever: '[data-qa="signup-button"]',
+  titulo: ".signup-form h2",
+  campoNome: '.signup-form [data-qa="signup-name"]',
+  campoEmail: '.signup-form [data-qa="signup-email"]',
+  botaoInscrever: '.signup-form [data-qa="signup-button"]',
   mensagemDeErro: ".signup-form p",
 };
 
@@ -20,6 +21,10 @@ export const formularioDeDadosDaConta = {
   campoCep: '[data-qa="zipcode"]',
   campoTelefone: '[data-qa="mobile_number"]',
   botaoCriarConta: '[data-qa="create-account"]',
+};
+
+export const paginaDaContaCriada = {
+  titulo: '[data-qa="account-created"]',
   botaoContinuar: '[data-qa="continue-button"]',
 };
 

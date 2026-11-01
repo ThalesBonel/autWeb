@@ -1,21 +1,23 @@
-import { cabecalho, textosDaConta } from "./seletores";
+import { cabecalho, paginaDaContaDeletada, textosDaConta } from "./seletores";
 
 export const abrirPaginaDeProdutos = () => {
-  cy.get(cabecalho.linkProdutos).click();
+  cy.get(cabecalho.linkProdutos).should("have.length", 1).click();
 };
 
 export const abrirFormulariosDeAcesso = () => {
-  cy.get(cabecalho.linkAcessoAConta).click();
+  cy.get(cabecalho.linkAcessoAConta).should("have.length", 1).click();
 };
 
 export const validarUsuarioLogadoComo = (nomeDoUsuario) => {
-  cy.contains("a", textosDaConta.indicadorUsuarioLogado)
+  cy.get(cabecalho.menu)
+    .contains("a", textosDaConta.indicadorUsuarioLogado)
+    .should("have.length", 1)
     .find("b")
     .should("have.text", nomeDoUsuario);
 };
 
 export const sairDaConta = () => {
-  cy.contains("a", textosDaConta.linkSair).click();
+  cy.get(cabecalho.linkSair).should("have.length", 1).click();
 };
 
 export const validarUrlDeLogin = () => {
@@ -23,9 +25,12 @@ export const validarUrlDeLogin = () => {
 };
 
 export const deletarConta = () => {
-  cy.contains("a", textosDaConta.linkDeletarConta).click();
+  cy.get(cabecalho.linkDeletarConta).should("have.length", 1).click();
 };
 
 export const validarContaDeletada = () => {
-  cy.get("b").contains(textosDaConta.contaDeletada).should("be.visible");
+  cy.get(paginaDaContaDeletada.titulo)
+    .should("have.length", 1)
+    .and("be.visible")
+    .and("have.text", "Account Deleted!");
 };

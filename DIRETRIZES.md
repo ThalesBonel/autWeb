@@ -111,24 +111,93 @@ Nome de função de validação que compara duas coisas deve dizer **o que** est
 comparado: `validarDetalhesDoProdutoCerto(produto)` recebe o produto lido da lista e
 prova que a tela de detalhes é daquele produto, não de outro.
 
-## 6. Seletores: ordem de preferência
+## 6. Seletores: ordem de preferência e regra obrigatória
 
-1. **`data-qa`** quando existe. É o atributo estável do site — mas só nas páginas de
-   login e cadastro. Em `/products` e `/product_details/<id>` **não existe `data-qa`**
-   (medido: a listagem tem zero ocorrências).
-2. **Classe estável + escopo.** Escopar sempre dentro do bloco que interessa.
-3. **Texto**, quando não há atributo (`cy.contains("a", "Logout")`).
+Seletores confiáveis são uma regra do projeto, não uma otimização opcional. Todo seletor novo
+ou alterado deve ser escolhido para identificar o elemento pretendido de forma única e
+reproduzível, não só porque funciona no DOM atual.
 
+Ordem de preferência:
+
+1. **Atributo de teste fornecido pelo site**, como `data-qa`, quando existe. Ele foi feito para
+   identificar controles de teste sem depender da aparência ou do texto. Neste alvo, aparece
+   principalmente em login/cadastro e pagamento; não existe em `/products` nem em
+   `/product_details/<id>` (medido: zero ocorrências na listagem).
+2. **ID, atributo HTML semântico ou endereço exato**, quando estável e único: por exemplo,
+   `#search_product`, `[name="email"]` ou `a[href="/products"]`. Não use uma busca parcial
+   (`*=`) se o valor exato da rota/atributo é conhecido.
+3. **Seletor estrutural estável, sempre escopado** ao bloco da tela ou ao item correto, como
+   `.shop-menu a[href="/products"]` ou `.productinfo p` dentro do card. A classe só é boa
+   escolha quando representa uma região funcional estável; evite classes que existem apenas
+   para estilo, animação ou layout.
+4. **Texto visível** com `cy.contains`, quando o texto faz parte do requisito que queremos
+   verificar ou não há atributo mais estável. Texto muda com idioma/capitalização; confira o
+   `textContent` real, não só o que CSS desenha na tela.
+
+### Procedimento obrigatório antes de usar um seletor
+
+- Inspecione a tela e o DOM **no estado em que o teste vai usar o elemento** (por exemplo, após
+  a busca, com modal aberto ou no carrinho vazio). Não infira a estrutura a partir do nome da
+  classe.
+- Conte quantos elementos correspondem e examine os matches: procure duplicatas em overlay,
+  carrossel, header/footer, modal, estados ocultos e links de texto alternativo. O alvo de uma
+  ação (`click`, `type`, `select`) deve corresponder a exatamente um elemento nesse estado.
+  Para validações intencionalmente repetidas, escopa ao container e valida cada item.
+- Prefira rota/atributo exatos a substring; prefira contexto do componente ao seletor global.
+  Se o seletor retorna vários nós, não acrescente `.first()` apenas para calar o Cypress: descubra
+  por que duplicou e escopa corretamente.
+- Use `.first()` somente quando “o primeiro” é a intenção explícita do caso (por exemplo, abrir
+  o primeiro produto) e faça as validações seguintes usarem os dados/identidade desse mesmo
+  item. Posição não deve substituir um seletor identificável.
+- Em site de terceiros não podemos adicionar `data-cy`/`data-testid`; use o atributo estável que
+  já existe. Não invente atributos nem trate uma classe visual como contrato do site.
+- Depois da escolha, confira a unicidade e o escopo em uma execução real; se o seletor for usado
+  para interação, confirme também que o alvo está visível e acionável. Não considere a seleção
+  otimizada só porque o teste passou uma vez.
+
+A recomendação geral do Cypress é isolar o teste de mudanças em CSS e comportamento com atributos
+`data-*` estáveis; aqui usamos `data-qa` do próprio site sempre que disponível. Referência:
+[Best Practices — Selecting Elements](https://docs.cypress.io/app/core-concepts/best-practices).
+
+### Melhorias de seletores aplicadas nesta revisão
+
+- `paginaDeProdutos.tituloDaPagina` agora é `.features_items > h2`. O seletor anterior
+  `.features_items h2` casava **69 nós**; o seletor direto identifica somente o heading principal
+  (medido: 1) sem depender das classes visuais `title text-center`.
+- `paginaDeProdutos.cardDoProduto` agora escopa os cards em `.features_items`.
+- O link de conta usa rota exata: `.shop-menu a[href="/login"]`; logout, exclusão e carrinho
+  também usam `href` exato dentro do menu.
+- O link do produto usa `.choose a[href^="/product_details/"]`, escopando pelo destino e pela
+  região do comando. O coletor deriva o ID do `href` e confirma um único nome, preço e link por
+  card; a abertura do detalhe usa o mesmo `produto.link` coletado, em vez de assumir que dois
+  seletores globais mantêm a mesma ordem.
+- Login e cadastro escopam cada `[data-qa]` ao formulário certo e afirmam título único. Erros
+  ficam no parágrafo do formulário correspondente; estados de conta criada/deletada usam o
+  `data-qa` próprio do site.
+- O título da home agora aponta para `.item.active h1`: seleciona o slide visível, em vez dos três
+  títulos que existem no carrossel.
+- Ações de formulário, carrinho, newsletter e pagamento verificam unicidade e visibilidade antes
+  de interagir. Na listagem, `.productinfo` e os dados de cada card são verificados sem usar
+  `.first()` para encobrir duplicatas.
+- A limpeza do carrinho agora aceita zero linhas e, quando há itens, identifica cada linha por
+  `product-<id>` antes de clicar no botão de remoção daquele produto.
+
+A medição mostrou a alternativa `.features_items > h2.title.text-center` (1 nó), mas foi
+intencionalmente preterida: `title` e `text-center` são classes de apresentação; a relação direta
+entre a região de produtos e seu heading é estrutural e não amarra o teste ao estilo.
 Armadilhas medidas em `/products`, que voltam a aparecer em qualquer teste novo:
 
 - `.single-products` = 34 cards, mas `.single-products h2` e `.single-products p`
   casam **68** vezes: nome e preço estão duplicados em `.productinfo` (visível) e
   `.product-overlay` (aparece no hover). Escopar em `.productinfo`.
 - O link "View Product" **não** está dentro de `.single-products`: é irmão, dentro de
-  `.product-image-wrapper > .choose`. Para chegar nele:
-  `.parent(".product-image-wrapper").find('a[href*="/product_details/"]')`.
+  `.product-image-wrapper > .choose`. O coletor sai do card para o wrapper do card e procura
+  `.choose a[href^="/product_details/"]`; armazena o link e o ID da rota para que o clique e a
+  validação de detalhe usem a mesma identidade.
 - Na home, `#slider-carousel h1` casa **3 vezes** (um por slide), e o texto do `<h1>` no
-  DOM é `AutomationExercise` **sem espaço** (o espaço é CSS). Usar `.first()` e regex.
+  DOM é `AutomationExercise` **sem espaço** (o espaço é CSS). O seletor atual usa
+  `#slider-carousel .item.active h1`, que identifica o título do slide ativo (um match); a asserção
+  mantém a regex `/^Automation\\s*Exercise$/` para o texto DOM.
 - Na tela de detalhes, cada campo é um `<p>` com rótulo e valor no mesmo texto
   ("Availability: In Stock"). Validar com regex sobre o texto, não com `contains` do
   valor solto: "In Stock" é igual nos 34 produtos e não prova que o campo existe.
@@ -330,6 +399,12 @@ apagado no mesmo bloco de comandos. Não deixe sonda no repo.
 - **`/checkout` e `/payment` respondem 200 sem sessão**, com menu de visitante, em vez de
   redirecionar para o login. Asserção de URL não prova que o usuário está logado; a
   prova é `validarUsuarioLogadoComo` antes do fluxo.
+- **Mensagem da newsletter é temporária (1,5s).** O script do site agenda `hide` no submit. O teste
+  chama `cy.clock()` antes de `cy.visit()` para controlar timers registrados no carregamento, depois
+  submete, executa `cy.tick(0)` e valida a mensagem enquanto o relógio continua parado. O texto do
+  `div` tem whitespace no DOM, então compare `invoke("text").trim()`; também valide que a classe
+  `hide` foi removida e que o elemento está visível. O primeiro run com relógio real falhou porque
+  o retry de 4s só consultou depois que a mensagem já se ocultara.
 - **Texto do documento oficial diverge do site.** O TC15/TC16 pedem
   "Your order has been placed successfully!", que **não existe** na página de sucesso;
   o que existe é `Order Placed!` + `Congratulations! Your order has been confirmed!`.
@@ -353,8 +428,6 @@ apagado no mesmo bloco de comandos. Não deixe sonda no repo.
 Itens conhecidos, não corrigidos, que devem ser tratados quando houver decisão:
 
 - `cy.visit("/")` repetido em todos os `it`s — candidato a `beforeEach`.
-- `paginaDeProdutos.botaoAdicionarAoCarrinho` sem nenhum uso (o `data-product-id` passou
-  a ser validado no `id` coletado).
 - `quantidade` em `paginaDoCarrinho` não é mais asserido: a quantidade depende do que
   sobrou no carrinho, então `TC16` limpa antes em vez de fixar `"1"`.
 - `screenshots/` de falhas antigas: falha gera screenshot automático, então rodada
@@ -384,8 +457,10 @@ Itens conhecidos, não corrigidos, que devem ser tratados quando houver decisão
   novo e validação da mensagem de confirmação antes de ela sumir (1,5s).
 - **TC15 — Place Order: Register before Checkout**: cadastro, carrinho, checkout,
   pagamento e confirmação, com `Delete Account` no fim.
-- **TC16 — Place Order: Login before Checkout**: mesma jornada, começando pelo login da
-  conta fixa (`teste_thales@teste.com`), sem deletar a conta.
+- **TC16 — Place Order: Login before Checkout (parcial)**: mesma jornada, começando pelo login da
+  conta fixa (`teste_thales@teste.com`). O pedido é concluído, mas os passos oficiais de apagar
+  conta e clicar em Continue não são executados para preservar a conta compartilhada por TC2/TC4.
+  Para completar o caso sem afetar esses testes, será preciso usar uma conta descartável.
 - **Home visível**: caso próprio, valida header, logo, carrossel e rodapé.
 
 Mapeamento do TC8 no código:
@@ -395,9 +470,10 @@ Mapeamento do TC8 no código:
   home.
 - Passo 4: `abrirPaginaDeProdutos()` (clique no link do cabeçalho).
 - Passo 5: `validarPaginaDeProdutos()` — URL `/products` + "All Products" visível.
-- Passo 6: `validarCardsDeProduto()` — `be.visible` no `.productinfo` de cada card;
+- Passo 6: `validarCardsDeProduto()` — `.productinfo` e o nome únicos/visíveis dentro de cada card;
   `validarDadosDosProdutos()` — piso de contagem e formato de id/nome/preço/link.
-- Passos 7-8: `abrirDetalhesDoPrimeiroProduto()` + `validarDetalhesDoProdutoCerto()`
-  com `eq` na URL e nome/preço comparados com o card.
+- Passos 7-8: `abrirDetalhesDoProduto(produto)` recebe o primeiro item coletado, seleciona o link
+  pelo `href` exato e `validarDetalhesDoProdutoCerto()` confirma `eq` na URL e nome/preço contra
+  a mesma identidade do card.
 - Passo 9: `validarCamposDoDetalheDoProduto()` — nome e preço visíveis e iguais ao card;
   Category, Availability, Condition e Brand existentes, visíveis e com valor.

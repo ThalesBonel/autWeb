@@ -1,11 +1,11 @@
 export const paginaDoCarrinho = {
   tabelaDoCarrinho: "#cart_info_table",
   linhaDoProduto: "#cart_info_table tbody tr",
+  botaoRemoverDoProduto: (idDoProduto) => `#product-${idDoProduto} .cart_quantity_delete`,
   nomeDoProduto: ".cart_description h4 a",
   precoDoProduto: ".cart_price p",
   quantidade: ".cart_quantity button",
   totalDoProduto: ".cart_total_price",
-  removerDoCarrinho: ".cart_quantity_delete",
   botaoIrParaCheckout: "a.check_out",
 };
 

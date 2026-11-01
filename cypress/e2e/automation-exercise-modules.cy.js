@@ -32,7 +32,7 @@ import {
   validarCardsDeProduto,
   validarDadosDosProdutos,
   coletarProdutosDaLista,
-  abrirDetalhesDoPrimeiroProduto,
+  abrirDetalhesDoProduto,
   validarDetalhesDoProdutoCerto,
   validarCamposDoDetalheDoProduto,
   buscarProduto,
@@ -150,7 +150,7 @@ describe("Automation Exercise", () => {
       validarDadosDosProdutos(produtos);
       cy.log(`${produtos.length} produtos encontrados na listagem`);
 
-      abrirDetalhesDoPrimeiroProduto();
+      abrirDetalhesDoProduto(produtos[0]);
       validarDetalhesDoProdutoCerto(produtos[0]);
       validarCamposDoDetalheDoProduto();
     });
@@ -171,6 +171,7 @@ describe("Automation Exercise", () => {
   })
 
   it('Verificar a inscrição na newsletter pela home com sucesso', () => {
+    cy.clock();
     cy.visit("/");
     validarHomeCarregada();
 
@@ -178,6 +179,7 @@ describe("Automation Exercise", () => {
     validarRodapeComInscricao();
 
     inscreverEmail(`inscrito_${timestamp}@test.com`);
+    cy.tick(0);
     validarInscricaoConfirmada();
   })
 

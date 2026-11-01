@@ -1,11 +1,12 @@
 export const paginaDeProdutos = {
-  tituloDaPagina: ".features_items h2",
-  cardDoProduto: ".single-products",
+  tituloDaPagina: ".features_items > h2",
+  cardDoProduto: ".features_items .single-products",
   agrupadorDoCard: ".product-image-wrapper",
+  blocoDeInformacaoDoProduto: ".productinfo",
   nomeDoProduto: ".productinfo p",
   precoDoProduto: ".productinfo h2",
-  botaoAdicionarAoCarrinho: ".productinfo .add-to-cart",
-  linkVerProduto: 'a[href*="/product_details/"]',
+  botaoAdicionarAoCarrinho: ".productinfo .add-to-cart[data-product-id]",
+  linkVerProduto: '.choose a[href^="/product_details/"]',
   campoDeBusca: "#search_product",
   botaoDeBusca: "#submit_search",
 };

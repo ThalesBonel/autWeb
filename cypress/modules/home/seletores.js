@@ -1,8 +1,8 @@
 export const paginaInicial = {
   cabecalho: "#header",
-  logo: ".logo img",
+  logo: '.logo img[alt="Website for automation practice"]',
   carrossel: "#slider-carousel",
-  tituloDoCarrossel: "#slider-carousel h1",
+  tituloDoCarrossel: "#slider-carousel .item.active h1",
   rodape: "#footer",
   tituloDaInscricao: "#footer h2",
   campoDeEmailDaInscricao: "#susbscribe_email",
